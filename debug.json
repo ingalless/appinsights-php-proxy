@@ -1,0 +1,50 @@
+[
+  {
+    "Documents": null,
+    "InstrumentationKey": "c959f435-704c-41eb-a6e0-56c88fbbc774",
+    "Metrics": [
+      {
+        "Name": "\\\\Processor(_Total)\\\\% Processor Time",
+        "Value": 7.634854771784233,
+        "Weight": 1
+      },
+      {
+        "Name": "\\\\Memory\\\\Committed Bytes",
+        "Value": 7471194112,
+        "Weight": 1
+      },
+      {
+        "Name": "\\\\ApplicationInsights\\\\Requests/Sec",
+        "Value": 0,
+        "Weight": 1
+      },
+      {
+        "Name": "\\\\ApplicationInsights\\\\Requests Failed/Sec",
+        "Value": 0,
+        "Weight": 1
+      },
+      {
+        "Name": "\\\\ApplicationInsights\\\\Dependency Calls/Sec",
+        "Value": 0,
+        "Weight": 1
+      },
+      {
+        "Name": "\\\\ApplicationInsights\\\\Dependency Calls Failed/Sec",
+        "Value": 0,
+        "Weight": 1
+      },
+      {
+        "Name": "\\\\ApplicationInsights\\\\Exceptions/Sec",
+        "Value": 0,
+        "Weight": 1
+      }
+    ],
+    "InvariantVersion": 1,
+    "Timestamp": "/Date(1699522284603)/",
+    "Version": "node:2.9.0",
+    "StreamId": "63adcba4ce0f4bd897f199cc3d5db29f",
+    "MachineName": "ingalless-Latitude-5401",
+    "Instance": "ingalless-Latitude-5401",
+    "RoleName": "Web"
+  }
+]
