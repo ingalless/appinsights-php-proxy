@@ -1,8 +1,9 @@
 use dotenvy::dotenv;
-use quickpulse::{Metric, Client};
+use quickpulse::Client;
 use std::{env, io};
 
 mod quickpulse;
+mod performance;
 
 const INSTRUMENTATION_KEY: &str = "APPINSIGHTS_INSTRUMENTATIONKEY";
 
