@@ -140,18 +140,6 @@ impl Client {
                 }
             }
         };
-
-        println!(
-            "Request {:?} {:?}",
-            heartbeat_headers,
-            serde_json::to_string(&heartbeat_body).unwrap()
-        );
-        println!(
-            "Response {} {:?} {:?}",
-            response.status(),
-            response.headers().to_owned(),
-            response.text().await.unwrap()
-        );
     }
 
     async fn post(&mut self) {
@@ -213,18 +201,6 @@ impl Client {
                 }
             }
         };
-
-        println!(
-            "Request {:?} {:?}",
-            heartbeat_headers,
-            serde_json::to_string(&heartbeat_body).unwrap()
-        );
-        println!(
-            "Response {} {:?} {:?}",
-            response.status(),
-            response.headers().to_owned(),
-            response.text().await.unwrap()
-        );
     }
 }
 
