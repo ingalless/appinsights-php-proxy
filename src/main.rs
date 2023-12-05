@@ -5,49 +5,25 @@ use axum::{
     BoxError, Router,
 };
 use axum_extra::response::JsonLines;
+use config::Config;
 use dotenvy::dotenv;
 use futures_util::StreamExt;
 use quickpulse::Client;
 use serde_json::{json, Value};
-use std::{env, io};
+use std::{env, io, sync::Arc};
 use tower::ServiceBuilder;
 use tower_http::decompression::RequestDecompressionLayer;
 
 mod performance;
 mod quickpulse;
+mod config;
+mod envelope;
 
-const INSTRUMENTATION_KEY: &str = "APPINSIGHTS_INSTRUMENTATIONKEY";
 const APPLICATIONINSIGHTS_CONNECTION_STRING: &str = "APPLICATIONINSIGHTS_CONNECTION_STRING";
 const APPINSIGHTS_PROXY_SERVER_PORT: &str = "APPINSIGHTS_PROXY_SERVER_PORT";
 
-struct Config {
-    ikey: String,
-    ingestion_endpoint: String,
-    live_endpoint: String,
-}
-
-impl Config {
-    fn new(connstring: String) -> Config {
-        let mut ikey = "";
-        let mut ingestion_endpoint = "";
-        let mut live_endpoint = "";
-        for part in connstring.split(";") {
-            println!("{:?}", part);
-            let (key, value) = part.split_once("=").unwrap();
-            match key {
-                "InstrumentationKey" => ikey = value,
-                "IngestionEndpoint" => ingestion_endpoint = value,
-                "LiveEndpoint" => live_endpoint = value,
-                _ => ()
-            }
-        }
-
-        Config {
-            ikey: ikey.to_string(),
-            ingestion_endpoint: ingestion_endpoint.to_string(),
-            live_endpoint: live_endpoint.to_string(),
-        }
-    }
+struct ServicesState {
+    _appinsights_client: appinsights::TelemetryClient,
 }
 
 #[tokio::main]
@@ -62,15 +38,19 @@ async fn main() -> io::Result<()> {
         Err(_) => 3000,
     };
 
-    let mut client = Client::new(config.ikey);
+    let mut quickpulse_client = Client::new(config.ikey.to_owned(), config.live_endpoint);
+    let _appinsights_client = appinsights::TelemetryClient::new(config.ikey.to_owned());
+
+    let shared_state = Arc::new(ServicesState { _appinsights_client });
 
     tokio::spawn(async move {
-        client.go().await;
+        quickpulse_client.go().await;
     });
 
     let app = Router::new()
         .route("/status", get(status))
         .route("/v2.1/track", post(track))
+        .with_state(shared_state)
         .layer(
             ServiceBuilder::new()
                 .layer(HandleErrorLayer::new(handle_error))
@@ -99,11 +79,12 @@ async fn status() -> response::Json<Value> {
 /**
 * https://github.com/MohanGsk/ApplicationInsights-Home/blob/master/EndpointSpecs/ENDPOINT-PROTOCOL.md
 */
-async fn track(mut stream: JsonLines<Value>) {
+async fn track(mut stream: JsonLines<envelope::EnvelopeTelemetry>) {
     while let Some(chunk) = stream.next().await {
-        println!("Line: {:?}", chunk.unwrap());
-        println!("--------------");
-        println!("");
-        println!("");
+        let envelope = chunk.unwrap();
+        match envelope.data {
+            envelope::BaseData::MetricData(data) => println!("metric: {:?}", data),
+            envelope::BaseData::RequestData(data) => println!("request: {:?}", data),
+        }
     }
 }

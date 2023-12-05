@@ -1,7 +1,7 @@
 const PING_INTERVAL_SECONDS: u64 = 5;
 const POST_INTERVAL_SECONDS: u64 = 1;
 
-use std::env;
+use std::{env, fmt::format};
 
 use crate::performance::PerformanceCollector;
 use reqwest::{header::HeaderMap, StatusCode};
@@ -38,12 +38,13 @@ pub struct Client {
     instance: String,
     stream_id: String,
     appinsights_key: String,
+    appinsights_live_endpoint: String,
     metrics: Vec<Metric>,
     performance_collector: PerformanceCollector,
 }
 
 impl Client {
-    pub fn new(appinsights_key: String) -> Self {
+    pub fn new(appinsights_key: String, appinsights_live_endpoint: String) -> Self {
         let system = System::new();
 
         let hostname = system
@@ -56,6 +57,7 @@ impl Client {
             appinsights_key,
             hostname,
             instance,
+            appinsights_live_endpoint,
             connected: false,
             metrics: vec![],
             stream_id: Uuid::new_v4().to_string().replace("-", ""),
@@ -84,6 +86,10 @@ impl Client {
 
     fn _add_metric(&mut self, metric: Metric) {
         self.metrics.push(metric);
+    }
+
+    fn build_url(&mut self, action: String) -> String {
+        format!("{}/QuickPulseService.svc/{}?ikey={}", self.appinsights_live_endpoint, action, self.appinsights_key)
     }
 
     async fn ping(&mut self) {
@@ -116,10 +122,7 @@ impl Client {
         heartbeat_headers.insert("Content-Type", "application/json".parse().unwrap());
 
         let response = client
-                .post(format!(
-                    "https://uksouth.livediagnostics.monitor.azure.com/QuickPulseService.svc/ping?ikey={}",
-                    self.appinsights_key
-                ))
+                .post(self.build_url("ping".to_string()))
                 .headers(heartbeat_headers.clone())
                 .body(serde_json::to_string(&heartbeat_body).unwrap())
                 .send()
@@ -177,10 +180,7 @@ impl Client {
         );
 
         let response = client
-                .post(format!(
-                    "https://uksouth.livediagnostics.monitor.azure.com/QuickPulseService.svc/post?ikey={}",
-                    self.appinsights_key
-                ))
+                .post(self.build_url("post".to_string()))
                 .headers(heartbeat_headers.clone())
                 .body(serde_json::to_string(&heartbeat_body).unwrap())
                 .send()
